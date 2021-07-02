@@ -18,15 +18,11 @@ class MainWindow(qtwid.QMainWindow):
 
     def Initialize(self):
         self.setWindowTitle("Button 클릭하면 TextEdit에 입력 내용을 Label에 표시")
-        self.tableWidget.setColumnCount(1)
+        self.tableWidget.setColumnCount(7)
         self.tableWidget.setRowCount(20)
-
         self.setGeometry(300, 100, 600, 400)
         self.tableWidget.resize(500, 500)
-        self.tableWidget.horizontalHeader().setSectionResizeMode(qtwid.QHeaderView.Stretch)
-
-
-
+        self.setTableWidgetData()
 
         self.te_query.move(10,510) #문자열 입력부분
         self.te_query.resize(300,40) #문자열 입력부분
@@ -36,6 +32,11 @@ class MainWindow(qtwid.QMainWindow):
         # self.lb_query.resize(600,40)
         self.btn_confirm.clicked.connect(self.uart)
 
+    def setTableWidgetData(self):
+        column_headers = ['No.', 'Time', 'Source', 'Destination', 'Protocol', 'Length', 'Info']
+        self.tableWidget.setHorizontalHeaderLabels(column_headers)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(qtwid.QHeaderView.Stretch)
+
     # def Btn_confirmClick(self):
     #     query = self.te_query.toPlainText()
     #     self.te_query.setText("")
@@ -43,7 +44,7 @@ class MainWindow(qtwid.QMainWindow):
 
     def uart(self):
         i = 0
-        value = 20
+        value = 0
         query = self.te_query.toPlainText()
         ser = serial.Serial("COM3", 115200, timeout=1)
         op = query
