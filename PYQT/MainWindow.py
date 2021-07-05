@@ -1,12 +1,16 @@
 import PyQt5.QtWidgets as qtwid
 import serial
 import sys
+import time
+import protocol
+
 
 from PyQt5 import QtWidgets, QtCore
 
 
-
+value1 = 0
 class MainWindow(qtwid.QMainWindow):
+
 
     def __init__(self):
         super().__init__()
@@ -18,7 +22,7 @@ class MainWindow(qtwid.QMainWindow):
 
     def Initialize(self):
         self.setWindowTitle("Button 클릭하면 TextEdit에 입력 내용을 Label에 표시")
-        self.tableWidget.setColumnCount(7)
+        self.tableWidget.setColumnCount(5)
         self.tableWidget.setRowCount(20)
         self.setGeometry(300, 100, 600, 400)
         self.tableWidget.resize(500, 500)
@@ -33,7 +37,8 @@ class MainWindow(qtwid.QMainWindow):
         self.btn_confirm.clicked.connect(self.uart)
 
     def setTableWidgetData(self):
-        column_headers = ['No.', 'Time', 'Source', 'Destination', 'Protocol', 'Length', 'Info']
+        column_headers = ['Time', 'Checksum', 'Respond', 'Length', 'Payload']
+        result_array = [0xAB, ]
         self.tableWidget.setHorizontalHeaderLabels(column_headers)
         self.tableWidget.horizontalHeader().setSectionResizeMode(qtwid.QHeaderView.Stretch)
 
@@ -43,18 +48,24 @@ class MainWindow(qtwid.QMainWindow):
     #     self.lb_query.setText(query)
 
     def uart(self):
-        i = 0
-        value = 0
+        global value1
         query = self.te_query.toPlainText()
         ser = serial.Serial("COM3", 115200, timeout=1)
         op = query
-        ser.write(op.encode())
+        ser.write(op.encode()) #값 입력
         # print("R:", ser.readline())
         str_data = str(ser.readline(), 'utf-8')
         print(str_data)
-        self.tableWidget.setItem(value, i, qtwid.QTableWidgetItem(str_data))  # 표부분
-        value+=1
-        print(value)
+        length = len(str_data)
+
+        self.tableWidget.setItem(value1, 1, qtwid.QTableWidgetItem(str_data))  # 표부분
+        self.tableWidget.setItem(value1, 0, qtwid.QTableWidgetItem(time.strftime('%H:%M:%S')))
+        self.tableWidget.setItem(value1, 3, qtwid.QTableWidgetItem(str(length)))
+        value1=value1+1
+        if op is 'q':
+            ser.close()
+        print(value1)
+        print(len(str_data))
 
 
 
