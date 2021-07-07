@@ -1,5 +1,9 @@
 import random
 from PyQt5 import QtCore, QtGui, QtWidgets
+
+
+
+
 class EditableHeaderView(QtWidgets.QHeaderView):
     textChanged = QtCore.pyqtSignal(int, str)
     def __init__(self, parent=None):
@@ -41,6 +45,10 @@ class EditableHeaderView(QtWidgets.QHeaderView):
         if self._current_index != -1:
             # self.model().setHeaderData(self._current_index, self.orientation(), text)
             self.textChanged.emit(self._current_index, text)
+
+
+
+
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -67,6 +75,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def on_text_changed(self, col, text):
         self._proxy.setFilterKeyColumn(col)
         self._proxy.setFilterWildcard("*{}*".format(text) if text else "")
+
+
+
 if __name__ == '__main__':
     import sys
     app = QtWidgets.QApplication(sys.argv)

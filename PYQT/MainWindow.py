@@ -1,101 +1,127 @@
+import binascii
+
 import PyQt5.QtWidgets as qtwid
 import serial
 import sys
+import secrets
+import random
 import numpy as np
 import time
 from PyQt5 import QtWidgets, QtCore
 
 
-value1 = 0
-class MainWindow(qtwid.QMainWindow):
+value1 = 1
+packet = [0xAB, 0x00, 0x00, 0x3C, 0x8C,  #STX, #Time
+                  0x00, 0x00, 0x03, 0xA0,  # check digit
+                  0xC0, 0xA8, 0xC9, 0x83,  # Reserved
+                  0xC0, 0xA8, 0xC9, 0x80, 0xAF, 0x40, 0x00, # Payload
+                  ]
+STX = "True"
+CheckSum = 0
+Length = 0
+Time = "0"
+checksum = 0
+Respond = "blank"
 
+
+STX_O = "0" #default로 설정된 프로토콜 값
+CheckSum_O = 0
+Length_0 = 0
+
+class MainWindow(qtwid.QMainWindow):
 
     def __init__(self):
         super().__init__()
         self.te_query = qtwid.QTextEdit(self) #문자열 입력부분
         self.btn_confirm = qtwid.QPushButton("확인",self)
-        # self.lb_query = qtwid.QLabel("[입력 문자열]",self)
         self.tableWidget = qtwid.QTableWidget(self)
         self.Initialize()
 
     def Initialize(self):
-        self.setWindowTitle("Button 클릭하면 TextEdit에 입력 내용을 Label에 표시")
+        self.setWindowTitle("PyQT")
         self.tableWidget.setColumnCount(6)
         self.tableWidget.setRowCount(20)
         self.setGeometry(300, 100, 600, 400)
         self.tableWidget.resize(1000, 500)
         self.tableWidget.horizontalHeader().setSectionResizeMode(qtwid.QHeaderView.Stretch)
         self.setTableWidgetData()
+        self.table = QtWidgets.QTableWidget()
+        self.table.setSortingEnabled(True)
 
         self.te_query.move(10,510) #문자열 입력부분
         self.te_query.resize(300,40) #문자열 입력부분
         self.btn_confirm.move(330,510) #확인 버튼
         self.btn_confirm.resize(100,40) #확인버튼
-        # self.lb_query.move(20,100)
-        # self.lb_query.resize(600,40)
         self.btn_confirm.clicked.connect(self.uart)
 
     def setTableWidgetData(self):
-        column_headers = ['STX', 'Time', 'Checksum', 'Respond', 'Length', 'Payload']
-        result_array = np.array([0xab, 0x1c, 0x3b, 0xf3, 0x75, 0x46, 0x14, 0x28, 0xf2, 0xca, 0xb4, 0xe7, 0xd6, 0x08, 0x00, 0x44, 0x89, 0xaa, 0xac, 0xff, 0xfa])
+        global STX_O, CheckSum_O, Length_0, checksum
+        column_headers = ['STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload']
 
-
-        # print(result_array[0:2])
         self.tableWidget.setHorizontalHeaderLabels(column_headers)
+        table = QtWidgets.QTableWidget()
+        table.setSortingEnabled(True)
 
-        self.tableWidget.setItem(value1, 0, qtwid.QTableWidgetItem(str(hex(result_array[0]))))  # STX
-        self.tableWidget.setItem(value1, 1, qtwid.QTableWidgetItem(str(hex(sum(result_array[1:5])))))  # Time
-        self.tableWidget.setItem(value1, 2, qtwid.QTableWidgetItem(str(hex(sum(result_array[5:9])))))  # Checksum
-        self.tableWidget.setItem(value1, 3, qtwid.QTableWidgetItem(str(hex(sum(result_array[9:13]))))) # Respond
-        self.tableWidget.setItem(value1, 4, qtwid.QTableWidgetItem(str(hex(sum(result_array[13:15])))))  # Length
-        self.tableWidget.setItem(value1, 5, qtwid.QTableWidgetItem(str(hex(sum(result_array[15:21])))))  # Payload
+        self.tableWidget.setItem(0, 0, qtwid.QTableWidgetItem((hex(packet[0]))))  # STX
+        STX_O = str(hex(packet[0]))
+        self.tableWidget.setItem(0, 1, qtwid.QTableWidgetItem(str.join("",("0x%02X " % i for i in packet[1:5]))))  # Time
+        self.tableWidget.setItem(0, 2, qtwid.QTableWidgetItem(str.join("",("0x%02X " % i for i in packet[6:9]))))  # Checksum
+        CheckSum_O = str.join("",("0x%02X " % i for i in packet[6:9]))
+        self.tableWidget.setItem(0, 3, qtwid.QTableWidgetItem(str.join("",("0x%02X " % i for i in packet[10:14])))) # Respond
+        self.tableWidget.setItem(0, 4, qtwid.QTableWidgetItem(str.join("",("0x%02X " % i for i in packet[15:])))) # Length
 
-    # def Btn_confirmClick(self):
-    #     query = self.te_query.toPlainText()
-    #     self.te_query.setText("")
-    #     self.lb_query.setText(query)
 
-    def uart(self):
+        j=0
+        hexidemal = 0
+        while (j<len(packet)):
+            hexidemal =
+        Length_0 = str.join("",("0x%02X " % i for i in packet[15:]))
+
+
+        self.tableWidget.setItem(0, 5, qtwid.QTableWidgetItem(str.join("",("0x%02X " % i for i in packet[14:]))))  # Payload
+
+
+    def uart(self): #20개의 패킷이 들어옴 //15부터 payload
         global value1
+        global packet
+        global STX, CheckSum, Length, Time, checksum
         query = self.te_query.toPlainText()
         ser = serial.Serial("COM3", 115200, timeout=1)
-        # op = query
-        op = b'ab 3b:f3:75:46:14:d8:f2:ca:b4:e7:d6:08:00'
-        x = str(op)
-        print(x)
-        a = str(op.split(":")[0])
-        # b = str(op.split(":")[1])
-        # c = str(op.split(":")[2])
-        # d = str(op.split(":")[3])
-        # e = str(op.split(":")[4])
-        # f = str(op.split(":")[5])
-        #
-        print(a)
-        # print(b)
-        # print(c)
-        # print(d)
-        # print(e)
-        # print(f)
+        op = query
+        a = op.split(" ")
+        # print(type(a[15]))
+        print(a[15])
+        i=15
+        while(i<len(a)):
+            CheckSum += int(a[i],16)
+            print(CheckSum)
+            i+=1
 
-        ser.write(op.encode()) #값 입력
-        print("R:", ser.readline())
-        str_data = str(ser.readline(), 'utf-8')
-        # print(str_data)
-        hex_int = int(str_data, 16)
-        length = len(str_data)
+        xx= hex(CheckSum)
+        print(xx) #0x238출력
+        print(checksum)
 
-        # self.tableWidget.setItem(value1, 1, qtwid.QTableWidgetItem(a)) #STX
-        # self.tableWidget.setItem(value1, 2, qtwid.QTableWidgetItem(str(op.split(':')[1]))) #Time
-        # self.tableWidget.setItem(value1, 3, qtwid.QTableWidgetItem(str(op.split(':')[2]))) #Checksum
-        # self.tableWidget.setItem(value1, 4, qtwid.QTableWidgetItem(str(op.split(':')[3]))) #Respond
-        # self.tableWidget.setItem(value1, 5, qtwid.QTableWidgetItem(str(op.split(':')[4]))) #Length
-        # self.tableWidget.setItem(value1, 6, qtwid.QTableWidgetItem(time.strftime(str(op.split(':')[2])))) #Payload
+        j=15
+        if(a[0]==STX_O): #완벽하게 일치한 패킷이 들어왔을 경우
+            STX = "True"
+            Time = " ".join(a[1:5])
+            while(j<len(a)):
+                Length +=1
+                j+=1
+            Reserved = " ".join(a[10:14])
+            Payload = " ".join(a[15:])
+
+        self.tableWidget.setItem(value1, 0, qtwid.QTableWidgetItem(STX)) #STX
+        self.tableWidget.setItem(value1, 1, qtwid.QTableWidgetItem(Time)) #Time
+        # self.tableWidget.setItem(value1, 2, qtwid.QTableWidgetItem(str(op.split(':')[2]))) #Checksum
+        self.tableWidget.setItem(value1, 3, qtwid.QTableWidgetItem(Reserved)) #Respond
+        self.tableWidget.setItem(value1, 4, qtwid.QTableWidgetItem(str(Length))) #Length
+        self.tableWidget.setItem(value1, 5, qtwid.QTableWidgetItem(Payload)) #Payload
 
         value1=value1+1
         if op is 'q':
             ser.close()
-        print(value1)
-        print(len(str_data))
+
 
     def on_comboBox_currentIndexChanged(self, index):
         self.proxy.setFilterKeyColumn(index)
@@ -129,7 +155,8 @@ class MainWindow(qtwid.QMainWindow):
         self.proxy.setFilterRegExp(filterString)
         self.proxy.setFilterKeyColumn(filterColumn)
 
-    
+
+
 
 
 
@@ -139,7 +166,3 @@ if __name__ == "__main__":
     mw = MainWindow()
     mw.show()
     app.exec()
-
-
-
-
