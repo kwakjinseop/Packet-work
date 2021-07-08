@@ -1,5 +1,3 @@
-import binascii
-
 import PyQt5.QtWidgets as qtwid
 import serial
 import sys
@@ -7,7 +5,7 @@ import secrets
 import random
 import numpy as np
 import time
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, Qt
 
 
 value1 = 1
@@ -19,10 +17,11 @@ packet = [0xAB, 0x00, 0x00, 0x3C, 0x8C,  #STX, #Time
 STX = "True"
 CheckSum = 0
 Length = 0
+leng = 0
 Time = "0"
-checksum = 0
 Respond = "blank"
-
+Payload_O = 0
+checksum =""
 
 STX_O = "0" #default로 설정된 프로토콜 값
 CheckSum_O = 0
@@ -55,7 +54,7 @@ class MainWindow(qtwid.QMainWindow):
         self.btn_confirm.clicked.connect(self.uart)
 
     def setTableWidgetData(self):
-        global STX_O, CheckSum_O, Length_0, checksum
+        global STX_O, CheckSum_O, Length_0, checksum, Payload_O
         column_headers = ['STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload']
 
         self.tableWidget.setHorizontalHeaderLabels(column_headers)
@@ -67,14 +66,13 @@ class MainWindow(qtwid.QMainWindow):
         self.tableWidget.setItem(0, 1, qtwid.QTableWidgetItem(str.join("",("0x%02X " % i for i in packet[1:5]))))  # Time
         self.tableWidget.setItem(0, 2, qtwid.QTableWidgetItem(str.join("",("0x%02X " % i for i in packet[6:9]))))  # Checksum
         CheckSum_O = str.join("",("0x%02X " % i for i in packet[6:9]))
-        self.tableWidget.setItem(0, 3, qtwid.QTableWidgetItem(str.join("",("0x%02X " % i for i in packet[10:14])))) # Respond
-        self.tableWidget.setItem(0, 4, qtwid.QTableWidgetItem(str.join("",("0x%02X " % i for i in packet[15:])))) # Length
+        self.tableWidget.setItem(0, 3, qtwid.QTableWidgetItem(str.join("",("0x%02X " % i for i in packet[10:14])))) # Reserved
+        self.tableWidget.setItem(0, 4, qtwid.QTableWidgetItem(str.join("",("0x%02X " % i for i in packet[15:])))) # Payload
+        Payload_O = sum(packet[15:])
 
 
         j=0
-        hexidemal = 0
-        while (j<len(packet)):
-            hexidemal =
+
         Length_0 = str.join("",("0x%02X " % i for i in packet[15:]))
 
 
@@ -84,41 +82,54 @@ class MainWindow(qtwid.QMainWindow):
     def uart(self): #20개의 패킷이 들어옴 //15부터 payload
         global value1
         global packet
-        global STX, CheckSum, Length, Time, checksum
+        global STX, CheckSum, Length, Time, checksum , Payload_O, leng
         query = self.te_query.toPlainText()
         ser = serial.Serial("COM3", 115200, timeout=1)
         op = query
         a = op.split(" ")
         # print(type(a[15]))
-        print(a[15])
         i=15
         while(i<len(a)):
             CheckSum += int(a[i],16)
-            print(CheckSum)
             i+=1
+        print(CheckSum)
 
-        xx= hex(CheckSum)
-        print(xx) #0x238출력
-        print(checksum)
+        print(Payload_O)
+
 
         j=15
         if(a[0]==STX_O): #완벽하게 일치한 패킷이 들어왔을 경우
             STX = "True"
             Time = " ".join(a[1:5])
+            if (CheckSum == Payload_O):
+                checksum = "Pass"
+            else:
+                checksum = "Fail"
             while(j<len(a)):
-                Length +=1
+                leng+=1
+                Length=leng
                 j+=1
+            leng=0
+            print(Length)
             Reserved = " ".join(a[10:14])
             Payload = " ".join(a[15:])
+        else:
+            STX="False"
+            Time = "False"
+            checksum = "False"
+            Reserved = "False"
+            Payload = "False"
+            Length = "False"
 
         self.tableWidget.setItem(value1, 0, qtwid.QTableWidgetItem(STX)) #STX
         self.tableWidget.setItem(value1, 1, qtwid.QTableWidgetItem(Time)) #Time
-        # self.tableWidget.setItem(value1, 2, qtwid.QTableWidgetItem(str(op.split(':')[2]))) #Checksum
+        self.tableWidget.setItem(value1, 2, qtwid.QTableWidgetItem(checksum)) #Checksum
         self.tableWidget.setItem(value1, 3, qtwid.QTableWidgetItem(Reserved)) #Respond
         self.tableWidget.setItem(value1, 4, qtwid.QTableWidgetItem(str(Length))) #Length
         self.tableWidget.setItem(value1, 5, qtwid.QTableWidgetItem(Payload)) #Payload
 
         value1=value1+1
+        CheckSum = 0
         if op is 'q':
             ser.close()
 
@@ -155,9 +166,11 @@ class MainWindow(qtwid.QMainWindow):
         self.proxy.setFilterRegExp(filterString)
         self.proxy.setFilterKeyColumn(filterColumn)
 
-
-
-
+    def search(self, s): # 검색기능 함수
+        items = self.table.findItems(s, Qt.MatchContains)
+        if items:
+            item = items[0]
+            self.table.setCurrentItem(item)
 
 
 
