@@ -383,7 +383,7 @@ class MyTable(QWidget):
 
     @pyqtSlot()
     def __btn23_clicked(self):
-        x = random.randint(1, 3)  # 1 <=  x <= 3  사이의 임의의 수
+        x = random.randint(1, 3)  # 1 <= x <= 3  사이의 임의의 수
         myitem = self.table.item(0, 0)
         if x == 1:
             myitem.setBackground(QBrush(QPixmap("exit.png")))  # cell 배경
