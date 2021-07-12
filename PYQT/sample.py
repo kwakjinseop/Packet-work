@@ -3,11 +3,11 @@ from PyQt5.QtGui import QBrush, QFont, QPixmap, QColor
 from PyQt5.QtWidgets import *
 import serial, random, string, sys, secrets
 from PyQt5.QtCore import *
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 import threading, time
 import qdarkstyle
-import csv
-from PyQt5 import QtCore
+import csv, sys
+import pandas as pd
 
 
 import sys
@@ -32,7 +32,7 @@ checksum =""
 STX_O = "0" #default로 설정된 프로토콜 값
 CheckSum_O = 0
 Length_0 = 0
-
+Count = 0
 class MainWindow(QMainWindow):
     def __init__(self): #칼럼: 6, 로우: 20
         global STX_O, CheckSum_O, Length_0, checksum, Payload_O
@@ -44,9 +44,7 @@ class MainWindow(QMainWindow):
         # self.comboxbutton.clicked.connect(combo)
         self.query = QLineEdit()
         self.query.setPlaceholderText("Search...")
-        # combo = QComboBox(mw)
-        # combo.addItems(['STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload' ])
-        # combo.move(20,70)
+
         self.query.textChanged.connect(self.search)
 
         n_rows = 20
@@ -94,15 +92,13 @@ class MainWindow(QMainWindow):
         self.btn9.clicked.connect(self.__btn9_clicked)
 
 
-
-
         self.table.setSortingEnabled(True)
 
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         column_headers = ['STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload']
         self.table.setHorizontalHeaderLabels(column_headers)
 
-        self.table.setItem(0, 0, QTableWidgetItem("STX\n========\n"+(hex(packet[0]))))  # STX
+        self.table.setItem(0, 0, QTableWidgetItem("STX\n=======================\n"+(hex(packet[0]))))  # STX
         STX_O = str(hex(packet[0]))
         self.table.setItem(0, 1, QTableWidgetItem("Time\n=======================\n"+str.join("", ("0x%02X " % i for i in packet[1:5]))))  # Time
         self.table.setItem(0, 2, QTableWidgetItem("Checksum\n=======================\n"+str.join("", ("0x%02X " % i for i in packet[5:9]))))  # Checksum
@@ -112,7 +108,7 @@ class MainWindow(QMainWindow):
         while (i<len(packet)):
             Length_0+=1
             i+=1
-        self.table.setItem(0, 4, QTableWidgetItem("Length\n========\n"+str(Length_0))) # Reserved
+        self.table.setItem(0, 4, QTableWidgetItem("Length\n=======================\n"+str(Length_0))) # Reserved
         self.table.setItem(0, 5, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[15:]))))  # Payload
         Payload_O = sum(packet[15:])
 
@@ -131,12 +127,46 @@ class MainWindow(QMainWindow):
 
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
+        self.cb = QComboBox(self)
+        self.cb.addItem('STX')
+        self.cb.addItem('Time')
+        self.cb.addItem('Checksum')
+        self.cb.addItem('Reserved')
+        self.cb.addItem('Length')
+        self.cb.addItem('Payload')
+        self.cb.resize(100, 40)
+        self.cb.move(940, 850)
+        self.cb.currentTextChanged.connect(self.combobox_select)
+        self.change_color = QPushButton("Color On", self)
+        self.change_color.clicked.connect(self.changecolor)
+        self.change_color.resize(100, 40)
+        self.change_color.move(1050, 850)
+
+        self.buttonSave = QPushButton('Save', self)
+        self.buttonSave.resize(100, 40)
+        self.buttonSave.move(1160, 850)
+        self.buttonSave.clicked.connect(self.SaveasExcel)
+
+    def changecolor(self):
+        for x in range(0,Count+1):
+            self.table.item(x,0).setBackground(QBrush(Qt.darkGreen)) #아이템이 있어야지만 색깔이 칠해짐
+            self.table.item(x, 1).setBackground(QBrush(Qt.darkYellow))
+            self.table.item(x, 2).setBackground(QBrush(Qt.gray))
+            self.table.item(x, 3).setBackground(QBrush(Qt.darkBlue))
+            self.table.item(x, 4).setBackground(QBrush(Qt.darkRed))
+            self.table.item(x, 5).setBackground(QBrush(Qt.darkCyan))
+
+
+        # self.table.item(0,0).setBackground(QBrush(Qt.red))
+        # for x in (1,20):
+        #     myitem.setBackground(QBrush(Qt.red))
+        #     # x+=1
 
 
 
-
-
-
+    def combobox_select(self):
+        print(self.cb.currentText()) #콤보박스 안에 값 출력
+        # e
 
 
 
@@ -150,7 +180,7 @@ class MainWindow(QMainWindow):
 
     def uart(self):  # 20개의 패킷이 들어옴 //15부터 payload
         global value1
-        global packet
+        global packet, Count
         global STX, CheckSum, Length, Time, checksum, Payload_O, leng
         query = self.te_query.toPlainText()
         ser = serial.Serial("COM3", 115200, timeout=1)
@@ -192,11 +222,11 @@ class MainWindow(QMainWindow):
             Payload = "False"
             Length = "False"
 
-        self.table.setItem(value1, 0, QTableWidgetItem("STX\n========\n"+STX))  # STX
+        self.table.setItem(value1, 0, QTableWidgetItem("STX\n=======================\n"+STX))  # STX
         self.table.setItem(value1, 1, QTableWidgetItem("Time\n=======================\n"+Time))  # Time
         self.table.setItem(value1, 2, QTableWidgetItem("Checksum\n=======================\n"+checksum))  # Checksum
         self.table.setItem(value1, 3, QTableWidgetItem("Reserved\n=======================\n"+   Reserved))  # Respond
-        self.table.setItem(value1, 4, QTableWidgetItem("Length\n========\n"+str(Length)))  # Length
+        self.table.setItem(value1, 4, QTableWidgetItem("Length\n=======================\n"+str(Length)))  # Length
         self.table.setItem(value1, 5, QTableWidgetItem("Payload\n=======================\n"+Payload))  # Payload
 
         delegate = AlignDelegate(self.table)
@@ -207,8 +237,11 @@ class MainWindow(QMainWindow):
         self.table.setItemDelegateForColumn(4, delegate)
         self.table.setItemDelegateForColumn(5, delegate)
 
+        self.table.verticalHeader().setDefaultSectionSize(120)
+
         value1 = value1 + 1
         CheckSum = 0
+        Count+=1
 
 
     def DebugChecking(str):
@@ -237,7 +270,29 @@ class MainWindow(QMainWindow):
     def __btn9_clicked(self):
         self.table.removeRow(1)  # 1번째 row 삭제
 
-    cnt = threading.Thread(target = Threading, args=(1,))
+    def SaveasExcel(self):
+        filename, _ = QFileDialog.getSaveFileName(self, 'Save File', '', ".xls(*.xls)")
+        wbk = xlwt.Workbook()
+        sheet = wbk.add_sheet("sheet", cell_overwrite_ok=True)
+        style = xlwt.XFStyle()
+        font = xlwt.Font()
+        font.bold = True
+        style.font = font
+        model = self.table.model()
+        for c in range(model.columnCount()):
+            text = model.headerData(c, QtCore.Qt.Horizontal)
+            sheet.write(0, c + 1, text, style=style)
+
+        for r in range(model.rowCount()):
+            text = model.headerData(r, QtCore.Qt.Vertical)
+            sheet.write(r + 1, 0, text, style=style)
+
+        for c in range(model.columnCount()):
+            for r in range(model.rowCount()):
+                text = model.data(model.index(r, c))
+                sheet.write(r + 1, c + 1, text)
+        wbk.save(filename)
+
 
 
     # def cellbackgroundcolor(self):
@@ -261,26 +316,7 @@ class MainWindow(QMainWindow):
     #
     # cnt2.join()
     # print("체크종료")
-    def savefile(self):
-        filename = Unicode(QtGui.QFileDialog.getSaveFileName(self, 'Save File', '', ".xls(*.xls)"))
-        wbk = xlwt.Workbook()
-        self.sheet = wbk.add_sheet("sheet", cell_overwrite_ok=True)
-        self.add2()
-        wbk.save(filename)
 
-    def add2(self):
-        row = 0
-        col = 0
-        for i in range(self.tableWidget.columnCount()):
-            for x in range(self.tableWidget.rowCount()):
-                try:
-                    teext = str(self.tableWidget.item(row, col).text())
-                    self.sheet.write(row, col, teext)
-                    row += 1
-                except AttributeError:
-                    row += 1
-            row = 0
-            col += 1
 
 class AlignDelegate(QtWidgets.QStyledItemDelegate):
     def initStyleOption(self, option, index):
