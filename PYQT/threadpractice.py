@@ -4,6 +4,7 @@ import _thread
 import time
 import random
 
+
 def DoItThread(str):
     cnt = 0
     while(cnt<10):

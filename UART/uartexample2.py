@@ -4,6 +4,6 @@ ser = serial.Serial("COM3", baudrate = 9600, parity=serial.PARITY_NONE, stopbits
 counter=0
 while 1:
     ser.write(b'Write counter: %d \n'%(counter))
-    print("printed")
+    print(ser.read())
     time.sleep(1)
     counter += 1
