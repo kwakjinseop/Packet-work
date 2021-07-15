@@ -377,14 +377,14 @@ class NewWindow(QtWidgets.QWidget):
         n_rows+=1
         Number+=1
 
-        model = self.table.model()
-
-
-        for start in range(n_rows):
-            text = model.data(model.index(start, 1))
-            start += 1
-            print(start)
-            print(text)
+        # model = self.table.model()
+        #
+        #
+        # for start in range(n_rows):
+        #     text = model.data(model.index(start, 1))
+        #     start += 1
+        #     print(start)
+        #     print(text)
 
 
 
