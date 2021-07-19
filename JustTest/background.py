@@ -39,6 +39,8 @@ n_rows = 2
 start = 1
 Number = 1
 
+
+
 textPayload=[]
 textSTX=[]
 textTime=[]
@@ -60,7 +62,10 @@ class MainWindow(QMainWindow):
         self.table = QTableWidget()
         self.table.setColumnCount(n_cols)
 
+
         layout = QVBoxLayout()
+
+
         layout.addWidget(self.table)
 
         mw = QWidget()
@@ -68,11 +73,11 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(mw)  #오후 1시 44분
 
         self.te_query = QTextEdit(self)
-        self.te_query.resize(300, 40)
-        self.te_query.move(40, 850)
         self.btn_button = QPushButton("Send", self)
+        self.te_query.move(40,850)
         self.btn_button.move(387, 850)
         self.btn_button.resize(100,40)
+        self.te_query.resize(300,40)
         self.btn_button.clicked.connect(self.uart)
 
         self.table.setSortingEnabled(True)

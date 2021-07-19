@@ -23,8 +23,6 @@ Time = "0"
 Respond = "blank"
 Payload_O = 0
 checksum = ""
-Reserved = 0
-Payload = 0
 
 STX_O = "0"  # default로 설정된 프로토콜 값
 CheckSum_O = 0
@@ -41,10 +39,15 @@ textTime = []
 textCheckSum = []
 textReserved = []
 textLength = []
-msg = -1
+msg = 0
+
+TS = 0
+TR = 0
+TP = 0
 
 
 class NewWindow(QtWidgets.QMainWindow):
+    global TS, TR, TL
     def __init__(self):
         super().__init__()
         global Length_1, STX_O, CheckSum_O, Payload_O
@@ -54,6 +57,7 @@ class NewWindow(QtWidgets.QMainWindow):
         self.query.setPlaceholderText("Search...")
         self.table = QTableWidget()
         self.table.setColumnCount(n_cols)
+        self.table.setRowCount(22222)
 
         layout = QVBoxLayout()
         layout.addWidget(self.query)
@@ -129,19 +133,6 @@ class NewWindow(QtWidgets.QMainWindow):
         self.buttonSave.resize(100, 40)
         self.buttonSave.move(1160, 850)
         self.buttonSave.clicked.connect(self.SaveasExcel)
-
-        self.cb = QComboBox(self)
-        self.cb.addItem('All')
-        self.cb.addItem('STX')
-        self.cb.addItem('Time')
-        self.cb.addItem('CheckSum')
-        self.cb.addItem('Reserved')
-        self.cb.addItem('Length')
-        self.cb.addItem('Payload')
-        self.cb.resize(100, 40)
-        self.cb.move(940, 850)
-        self.cb.currentTextChanged.connect(self.combobox_select)
-
         self.show()
         self.display()
 
@@ -202,38 +193,19 @@ class NewWindow(QtWidgets.QMainWindow):
         self.w = Background()
         self.w.command.connect(self.sendCommand)
 
-    # @QtCore.pyqtSlot(str) #수신받는 부분
-    def sendCommand(self, textSTX):
+    @QtCore.pyqtSlot(str)
+    def sendSTXCommand(self, textSTX):
         # self.table.setItem(value1, 0, QTableWidgetItem(str(Number)))
         self.table.setItem(value1, 1, QTableWidgetItem(textSTX))  # STX
-        # self.table.setItem(value1, 2, QTableWidgetItem(textTime))  # Time
-        # self.table.setItem(value1, 3, QTableWidgetItem(textCheckSum))  # Checksum
-        # self.table.setItem(value1, 4, QTableWidgetItem(textReserved))  # Reserved
-        # self.table.setItem(value1, 5, QTableWidgetItem(str(Length)))  # Length
-        # self.table.setItem(value1, 6, QTableWidgetItem(textPayload))  # Payload
 
-    # @QtCore.pyqtSlot() #송신하는 부분
-    def combobox_select(self):
-        global start, msg
-        # print(self.cb.currentText())  # 콤보박스 안에 값 출력
-        if (self.cb.currentText() == "All"):
-            msg = 0
-            self.ww = Background()
-            self.ww.getValue(msg)
-        elif (self.cb.currentText() == "STX"):
-            msg = 1
-            self.ww = Background()
-            self.ww.getValue(msg)
-        elif (self.cb.currentText() == "Time"):
-            msg = 2
-        elif (self.cb.currentText() == "CheckSum"):
-            msg = 3
-        elif (self.cb.currentText() == "Reserved"):
-            msg = 4
-        elif (self.cb.currentText() == "Length"):
-            msg = 5
-        elif (self.cb.currentText() == "Payload"):
-            msg = 6
+    def sendCommand(self):
+            self.table.setItem(value1, 0, QTableWidgetItem(str(Number)))
+            self.table.setItem(value1, 1, QTableWidgetItem(textSTX))  # STX
+            # self.table.setItem(value1, 3, QTableWidgetItem(TS))  # Checksum
+            # self.table.setItem(value1, 4, QTableWidgetItem(TR))  # Reserved
+            self.table.setItem(value1, 5, QTableWidgetItem(str(Length)))  # Length
+            # self.table.setItem(value1, 6, QTableWidgetItem(TP))  # Payload
+
 
 class Background(QtWidgets.QMainWindow):
     command = QtCore.pyqtSignal(str)
@@ -296,15 +268,45 @@ class Background(QtWidgets.QMainWindow):
         self.table.setItemDelegateForColumn(5, delegate)
 
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        self.cb = QComboBox(self)
+        self.cb.addItem('All')
+        self.cb.addItem('STX')
+        self.cb.addItem('Time')
+        self.cb.addItem('CheckSum')
+        self.cb.addItem('Reserved')
+        self.cb.addItem('Length')
+        self.cb.addItem('Payload')
+        self.cb.resize(100, 40)
+        self.cb.move(940, 850)
+        self.cb.currentTextChanged.connect(self.combobox_select)
+        # self.th.start()
+        # self.th1.start()
         self.show()
 
+    def combobox_select(self):
+        global start, msg
+        # print(self.cb.currentText())  # 콤보박스 안에 값 출력
+        if (self.cb.currentText() == "All"):
+            msg = 0
+        elif (self.cb.currentText() == "STX"):
+            msg = 1
+        elif (self.cb.currentText() == "Time"):
+            msg = 2
+        elif (self.cb.currentText() == "CheckSum"):
+            msg = 3
+        elif (self.cb.currentText() == "Reserved"):
+            msg = 4
+        elif (self.cb.currentText() == "Length"):
+            msg = 5
+        elif (self.cb.currentText() == "Payload"):
+            msg = 6
 
-    # @QtCore.pyqtSlot(str) #수신하는 부분
-    # @QtCore.pyqtSlot() #다시 전송하는 부분
+    @QtCore.pyqtSlot()
     def uart(self):  # 20개의 패킷이 들어옴 //15부터 payload
         global value1
         global packet, Count
-        global STX, CheckSum, Length, Time, checksum, Payload_O, leng, n_rows, start, Number, textPayload, textSTX, textTime, textCheckSum, textReserved, textLength, msg, ab
+        global STX, CheckSum, Length, Time, checksum, Payload_O, leng, n_rows, start, Number, textPayload, textSTX, textTime, textCheckSum, textReserved, textLength, msg, TS, TR, TP
         self.table.setRowCount(n_rows)
         query = self.te_query.toPlainText()
         ser = serial.Serial("COM3", 115200, timeout=1)
@@ -378,12 +380,21 @@ class Background(QtWidgets.QMainWindow):
         if (msg == 0):
             model = self.table.model()
             for start in range(n_rows):
-                textSTX = model.data(model.index(start, 0))
+                textSTX = model.data(model.index(start, 1))
+                self.command.emit(textSTX)
                 textTime = model.data(model.index(start, 2))
+                self.command.emit(textTime)
                 textCheckSum = model.data(model.index(start, 3))
+                TS = list(map(int, textCheckSum))
+                self.command.emit(TS)
                 textReserved = model.data(model.index(start, 4))
+                TR = list(map(int, textReserved))
+                self.command.emit(TR)
                 textLength = model.data(model.index(start, 5))
+                self.command.emit(textLength)
                 textPayload = model.data(model.index(start, 6))
+                TP = list(map(int, textPayload))
+                self.command.emit(TP)
 
                 # print(textSTX)
                 start += 1
@@ -398,49 +409,36 @@ class Background(QtWidgets.QMainWindow):
                     continue
                 # print(textSTX)
                 start += 1
-
         if (msg == 2):
             model = self.table.model()
             for start in range(n_rows):
                 textTime = model.data(model.index(start, 2))
                 self.command.emit(textTime)
                 start += 1
-
         if (msg == 3):
             model = self.table.model()
             for start in range(n_rows):
                 textCheckSum = model.data(model.index(start, 3))
                 self.command.emit(textCheckSum)
                 start += 1
-
         if (msg == 4):
             model = self.table.model()
             for start in range(n_rows):
                 textReserved = model.data(model.index(start, 4))
                 self.command.emit(textReserved)
                 start += 1
-
         if (msg == 5):
             model = self.table.model()
             for start in range(n_rows):
                 textLength = model.data(model.index(start, 5))
                 self.command.emit(textLength)
                 start += 1
-
         if (msg == 6):
             model = self.table.model()
             for start in range(n_rows):
                 textPayload = model.data(model.index(start, 6))
                 self.command.emit(textPayload)
                 start += 1
-    def getValue(self):
-        if(msg == 1):
-            print(self.table.item(msg, 1))
-        self.table.Item(msg, 2, QTableWidgetItem(Time))  # Time
-        self.table.Item(msg, 3, QTableWidgetItem(checksum))  # Checksum
-        self.table.Item(msg, 4, QTableWidgetItem(Reserved))  # Reserved
-        self.table.Item(msg, 5, QTableWidgetItem(str(Length)))  # Length
-        self.table.Item(msg, 6, QTableWidgetItem(Payload))  # Payload
 
 
 class AlignDelegate(QtWidgets.QStyledItemDelegate):
