@@ -338,6 +338,7 @@ class MyTable(QWidget):
         msg = QMessageBox.information(self, 'cell 내용', txt)
         return
 
+
     @pyqtSlot()
     def __btn20_clicked(self):
         item = self.table.item(0, 0)  # (0,0) cell 의 item 가져오기.

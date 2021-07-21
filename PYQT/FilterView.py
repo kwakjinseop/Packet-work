@@ -12,6 +12,7 @@ import pandas as pd
 
 
 
+
 value1 = 0
 value2 = 0
 packet = [0xAB, 0x00, 0x00, 0x3C, 0x8C,  # STX, #Time
@@ -58,11 +59,12 @@ class Ui_FilterView(object):
         global Length_1, STX_O, CheckSum_O, Payload_O
         FilterView.setWindowTitle("FilterView")
         FilterView.setObjectName("FilterView")
-        FilterView.resize(1081, 835)
+        FilterView.resize(1912, 951)
+        FilterView.setStyleSheet("Grid layout")
         self.centralwidget = QtWidgets.QWidget(FilterView)
         self.centralwidget.setObjectName("centralwidget")
         self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidget.setGeometry(QtCore.QRect(10, 10, 451, 681))
+        self.tableWidget.setGeometry(QtCore.QRect(0, 10, 881, 751))
         self.tableWidget.setRowCount(20000)
         self.tableWidget.setColumnCount(7)
         column_headers = ['Number', 'STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload']
@@ -99,7 +101,7 @@ class Ui_FilterView(object):
 
         #############왼쪽 테이블########################
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
-        self.comboBox.setGeometry(QtCore.QRect(480, 280, 111, 41))
+        self.comboBox.setGeometry(QtCore.QRect(890, 300, 91, 41))
         self.comboBox.setObjectName("comboBox")
         self.comboBox.addItem("Number")
         self.comboBox.addItem("STX")
@@ -112,7 +114,7 @@ class Ui_FilterView(object):
         #############콤보박스##############################
 
         self.tableWidget_2 = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidget_2.setGeometry(QtCore.QRect(610, 10, 451, 771))
+        self.tableWidget_2.setGeometry(QtCore.QRect(990, 10, 891, 751))
         self.tableWidget_2.setRowCount(20000)
         self.tableWidget_2.setColumnCount(7)
         self.tableWidget_2.setObjectName("tableWidget_2")
@@ -122,37 +124,33 @@ class Ui_FilterView(object):
         self.tableWidget.setSortingEnabled(True)
         #############오른쪽 테이블##########################
         self.textEdit = QtWidgets.QTextEdit(self.centralwidget)
-        self.textEdit.setGeometry(QtCore.QRect(480, 350, 111, 41))
+        self.textEdit.setGeometry(QtCore.QRect(890, 350, 91, 41))
         self.textEdit.setObjectName("textEdit")
         #############텍스트 입력상자#########################
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(480, 420, 111, 51))
+        self.pushButton.setGeometry(QtCore.QRect(890, 400, 91, 51))
         self.pushButton.setObjectName("pushButton")
         self.pushButton.setText("Apply")
         self.pushButton.clicked.connect(self.filtering)
         #############Apply 버튼###########################
         self.textEdit_2 = QtWidgets.QTextEdit(self.centralwidget)
-        self.textEdit_2.setGeometry(QtCore.QRect(10, 710, 331, 51))
+        self.textEdit_2.setGeometry(QtCore.QRect(10, 770, 321, 51))
         self.textEdit_2.setObjectName("textEdit_2")
         #############텍스트 입력상자#########################
         self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_2.setGeometry(QtCore.QRect(350, 710, 111, 51))
+        self.pushButton_2.setGeometry(QtCore.QRect(340, 770, 111, 51))
         self.pushButton_2.setObjectName("pushButton_2")
         self.pushButton_2.setText("Send")
         FilterView.setCentralWidget(self.centralwidget)
         self.pushButton_2.clicked.connect(self.uart)
         #############텍스트 전송버튼#########################
-        self.menubar = QtWidgets.QMenuBar(FilterView)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1081, 26))
-        self.menubar.setObjectName("menubar")
-        self.menuFilterView = QtWidgets.QMenu(self.menubar)
-        self.menuFilterView.setObjectName("menuFilterView")
-        FilterView.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(FilterView)
-        self.statusbar.setObjectName("statusbar")
-        FilterView.setStatusBar(self.statusbar)
-        self.menubar.addAction(self.menuFilterView.menuAction())
+        self.pushCSV = QtWidgets.QPushButton(self.centralwidget)
+        self.pushCSV.setGeometry(QtCore.QRect(890, 450, 91, 51))
+        self.pushCSV.setObjectName("pushButton")
+        self.pushCSV.setText("CSV")
+        self.pushCSV.clicked.connect(self.csv)
         #############CSV 메뉴바#########################
+
 
     def uart(self):  # 20개의 패킷이 들어옴 //15부터 payload
         global value1
@@ -253,6 +251,21 @@ class Ui_FilterView(object):
         global result, msg, value2, txt
         global STX, CheckSum, Length, Time, checksum, Payload_O, leng, n_rows, start, Number, textPayload, textSTX, textTime, textCheckSum, textReserved, textLength, msg, TS, TR, TP, Reserved, Payload
         query = self.textEdit.toPlainText()
+        if msg==0: #Number로 콤보박스를 체크했을 경우
+            for i in range(0,n_rows-1):
+                data = self.tableWidget.item(i,0)
+                txt=data.text()
+                print(txt)
+                if txt == query: #만약에 일치하는 경우
+                    print("Yes")
+                    self.tableWidget_2.setItem(value2, 0, QTableWidgetItem(self.tableWidget.item(i, 0)))
+                    self.tableWidget_2.setItem(value2, 1, QTableWidgetItem(self.tableWidget.item(i, 1)))
+                    self.tableWidget_2.setItem(value2, 2, QTableWidgetItem(self.tableWidget.item(i, 2)))
+                    self.tableWidget_2.setItem(value2, 3, QTableWidgetItem(self.tableWidget.item(i, 3)))
+                    self.tableWidget_2.setItem(value2, 4, QTableWidgetItem(self.tableWidget.item(i, 4)))
+                    self.tableWidget_2.setItem(value2, 5, QTableWidgetItem(self.tableWidget.item(i, 5)))
+                    self.tableWidget_2.setItem(value2, 6, QTableWidgetItem(self.tableWidget.item(i, 6)))
+                    value2 = value2 +1
         if msg==2: #Time로 콤보박스를 체크했을 경우
             for i in range(0,n_rows-1):
                 data = self.tableWidget.item(i,2)
@@ -260,53 +273,69 @@ class Ui_FilterView(object):
                 print(txt)
                 if txt == query: #만약에 일치하는 경우
                     print("Yes")
-                    self.tableWidget_2.setItem(i, 0, QTableWidgetItem(self.tableWidget.item(i, 0)))
-                    self.tableWidget_2.setItem(i, 1, QTableWidgetItem(self.tableWidget.item(i,1)))
-                    self.tableWidget_2.setItem(i, 2, QTableWidgetItem(self.tableWidget.item(i, 2)))
-                    self.tableWidget_2.setItem(i, 3, QTableWidgetItem(self.tableWidget.item(i, 3)))
-                    self.tableWidget_2.setItem(i, 4, QTableWidgetItem(self.tableWidget.item(i, 4)))
-                    self.tableWidget_2.setItem(i, 5, QTableWidgetItem(self.tableWidget.item(i, 5)))
-                    self.tableWidget_2.setItem(i, 6, QTableWidgetItem(self.tableWidget.item(i, 6)))
+                    self.tableWidget_2.setItem(value2, 0, QTableWidgetItem(self.tableWidget.item(i, 0)))
+                    self.tableWidget_2.setItem(value2, 1, QTableWidgetItem(self.tableWidget.item(i,1)))
+                    self.tableWidget_2.setItem(value2, 2, QTableWidgetItem(self.tableWidget.item(i, 2)))
+                    self.tableWidget_2.setItem(value2, 3, QTableWidgetItem(self.tableWidget.item(i, 3)))
+                    self.tableWidget_2.setItem(value2, 4, QTableWidgetItem(self.tableWidget.item(i, 4)))
+                    self.tableWidget_2.setItem(value2, 5, QTableWidgetItem(self.tableWidget.item(i, 5)))
+                    self.tableWidget_2.setItem(value2, 6, QTableWidgetItem(self.tableWidget.item(i, 6)))
+                    value2 = value2 + 1
 
-        if msg == 4:  # Time로 콤보박스를 체크했을 경우
+        if msg == 4:  # Reserved로 콤보박스를 체크했을 경우
             for i in range(0, n_rows -1):
                 data = self.tableWidget.item(i, 4)
                 txt = data.text()
                 print(txt)
                 if txt == query:  # 만약에 일치하는 경우
                     print("Yes")
-                    self.tableWidget_2.setItem(i, 0, QTableWidgetItem(self.tableWidget.item(i, 0)))
-                    self.tableWidget_2.setItem(i, 1, QTableWidgetItem(self.tableWidget.item(i, 1)))
-                    self.tableWidget_2.setItem(i, 2, QTableWidgetItem(self.tableWidget.item(i, 2)))
-                    self.tableWidget_2.setItem(i, 3, QTableWidgetItem(self.tableWidget.item(i, 3)))
-                    self.tableWidget_2.setItem(i, 4, QTableWidgetItem(self.tableWidget.item(i, 4)))
-                    self.tableWidget_2.setItem(i, 5, QTableWidgetItem(self.tableWidget.item(i, 5)))
-                    self.tableWidget_2.setItem(i, 6, QTableWidgetItem(self.tableWidget.item(i, 6)))
+                    self.tableWidget_2.setItem(value2, 0, QTableWidgetItem(self.tableWidget.item(i, 0)))
+                    self.tableWidget_2.setItem(value2, 1, QTableWidgetItem(self.tableWidget.item(i, 1)))
+                    self.tableWidget_2.setItem(value2, 2, QTableWidgetItem(self.tableWidget.item(i, 2)))
+                    self.tableWidget_2.setItem(value2, 3, QTableWidgetItem(self.tableWidget.item(i, 3)))
+                    self.tableWidget_2.setItem(value2, 4, QTableWidgetItem(self.tableWidget.item(i, 4)))
+                    self.tableWidget_2.setItem(value2, 5, QTableWidgetItem(self.tableWidget.item(i, 5)))
+                    self.tableWidget_2.setItem(value2, 6, QTableWidgetItem(self.tableWidget.item(i, 6)))
+                    value2 = value2 + 1
 
-        if msg == 6:  # Time로 콤보박스를 체크했을 경우
+        if msg == 6:  # Payload로 콤보박스를 체크했을 경우
             for i in range(0, n_rows - 1):
                 data = self.tableWidget.item(i, 6)
                 txt = data.text()
                 print(txt)
                 if txt == query:  # 만약에 일치하는 경우
                     print("Yes")
-                    self.tableWidget_2.setItem(i, 0, QTableWidgetItem(self.tableWidget.item(i, 0)))
-                    self.tableWidget_2.setItem(i, 1, QTableWidgetItem(self.tableWidget.item(i, 1)))
-                    self.tableWidget_2.setItem(i, 2, QTableWidgetItem(self.tableWidget.item(i, 2)))
-                    self.tableWidget_2.setItem(i, 3, QTableWidgetItem(self.tableWidget.item(i, 3)))
-                    self.tableWidget_2.setItem(i, 4, QTableWidgetItem(self.tableWidget.item(i, 4)))
-                    self.tableWidget_2.setItem(i, 5, QTableWidgetItem(self.tableWidget.item(i, 5)))
-                    self.tableWidget_2.setItem(i, 6, QTableWidgetItem(self.tableWidget.item(i, 6)))
+                    self.tableWidget_2.setItem(value2, 0, QTableWidgetItem(self.tableWidget.item(i, 0)))
+                    self.tableWidget_2.setItem(value2, 1, QTableWidgetItem(self.tableWidget.item(i, 1)))
+                    self.tableWidget_2.setItem(value2, 2, QTableWidgetItem(self.tableWidget.item(i, 2)))
+                    self.tableWidget_2.setItem(value2, 3, QTableWidgetItem(self.tableWidget.item(i, 3)))
+                    self.tableWidget_2.setItem(value2, 4, QTableWidgetItem(self.tableWidget.item(i, 4)))
+                    self.tableWidget_2.setItem(value2, 5, QTableWidgetItem(self.tableWidget.item(i, 5)))
+                    self.tableWidget_2.setItem(value2, 6, QTableWidgetItem(self.tableWidget.item(i, 6)))
+                    value2 = value2 + 1
 
+    def csv(self):
+        filename, _ = QFileDialog.getSaveFileName(self, 'Save File', '', ".xls(*.xls)")
+        wbk = xlwt.Workbook()
+        sheet = wbk.add_sheet("sheet", cell_overwrite_ok=True)
+        style = xlwt.XFStyle()
+        font = xlwt.Font()
+        font.bold = True
+        style.font = font
+        model = self.tableWidget_2.model()
+        for c in range(model.columnCount()):
+            text = model.headerData(c, QtCore.Qt.Horizontal)
+            sheet.write(0, c + 1, text, style=style)
 
+        for r in range(model.rowCount()):
+            text = model.headerData(r, QtCore.Qt.Vertical)
+            sheet.write(r + 1, 0, text, style=style)
 
-
-
-
-
-
-
-
+        for c in range(model.columnCount()):
+            for r in range(model.rowCount()):
+                text = model.data(model.index(r, c))
+                sheet.write(r + 1, c + 1, text)
+        wbk.save(filename)
 
 
 class AlignDelegate(QtWidgets.QStyledItemDelegate):
