@@ -1,0 +1,38 @@
+self.tableWidget.setRowCount(n_rows)
+        query = self.textEdit_2.toPlainText()
+        ser = serial.Serial("COM3", 115200, timeout=1)
+        op = query
+        a = op.split(" ")
+
+        if (a == "q"):
+            ser.close()
+
+        # print(type(a[15]))
+        i = 15
+        while (i < len(a)):
+            CheckSum += int(a[i], 16)
+            i += 1
+
+        j = 15
+        if (a[0] == STX_O):  # 완벽하게 일치한 패킷이 들어왔을 경우
+            STX = "True"
+            Time = " ".join(a[1:5])
+            if (CheckSum == Payload_O):
+                checksum = "Pass"
+            else:
+                checksum = "Fail"
+            while (j < len(a)):
+                leng += 1
+                Length = leng
+                j += 1
+            leng = 0
+
+            Reserved = " ".join(a[10:14])
+            Payload = " ".join(a[15:])
+        else:
+            STX = "False"
+            Time = "False"
+            checksum = "False"
+            Reserved = "False"
+            Payload = "False"
+            Length = "False"

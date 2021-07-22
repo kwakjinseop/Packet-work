@@ -40205,6 +40205,45 @@
      <string>Apply</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButton_3">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>460</y>
+      <width>91</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Export</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_4">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>520</y>
+      <width>91</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Import</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_5">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>770</y>
+      <width>111</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Apply</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -40219,10 +40258,46 @@
     <property name="title">
      <string>CSV</string>
     </property>
+    <addaction name="actionImport"/>
+    <addaction name="actionExport_2"/>
+   </widget>
+   <widget class="QMenu" name="menuSetting">
+    <property name="title">
+     <string>Setting</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="actionPort"/>
+    <addaction name="actionTheme"/>
    </widget>
    <addaction name="menuFilterView"/>
+   <addaction name="menuSetting"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionPort">
+   <property name="text">
+    <string>Port</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="text">
+    <string>Import</string>
+   </property>
+  </action>
+  <action name="actionExport">
+   <property name="text">
+    <string>Export</string>
+   </property>
+  </action>
+  <action name="actionExport_2">
+   <property name="text">
+    <string>Export</string>
+   </property>
+  </action>
+  <action name="actionTheme">
+   <property name="text">
+    <string>Theme</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
