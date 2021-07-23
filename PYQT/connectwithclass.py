@@ -1,47 +1,49 @@
+import os
 import sys
-from PyQt5 import QtCore, QtGui, QtWidgets
+from os.path import dirname, realpath, join
+from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QTableWidget, QTableWidgetItem
+from PyQt5.uic import loadUiType
+import pandas as pd
 
 
-class Window(QtWidgets.QWidget):
+scriptDir = dirname(realpath(__file__))
+From_Main, _ = loadUiType(join(dirname(__file__), "untitled.ui"))
+
+class MainWindow(QWidget, From_Main):
     def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Destination")
-        self.label = QtWidgets.QLabel("text", self)
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
-        self.label.resize(300, 100)
-        self.display()
-        self.show()
+        super(MainWindow, self).__init__()
+        QWidget.__init__(self)
+        self.setupUi(self)
 
-    def display(self):
-        self.w = NewWindw()
-        self.w.command.connect(self.anyfunction)
+        self.ButtonOpen.clicked.connect(self.OpenFile)
+        self.BtnDescribe.clicked.connect(self.dataHead)
 
-    def closeEvent(self, event):
-        self.w.close()
+    def OpenFile(self):
+        try:
+            path = QFileDialog.getOpenFileName(self, 'Open CSV', './')
+            self.all_data = pd.read_csv(path)
+        except:
+            print(path)
 
-    @QtCore.pyqtSlot(str)
-    def anyfunction(self, msg):
-        self.label.setText(msg)
+    def dataHead(self):
+        numColomn = self.spinBox.value()
+        if numColomn == 0:
+            NumRows = len(self.all_data.index)
+        else:
+            NumRows = numColomn
+        self.tableWidget.setColumnCount(len(self.all_data.columns))
+        self.tableWidget.setRowCount(NumRows)
+        self.tableWidget.setHorizontalHeaderLabels(self.all_data.columns)
 
+        for i in range(NumRows):
+            for j in range(len(self.all_data.columns)):
+                self.tableWidget.setItem(i, j, QTableWidgetItem(str(self.all_data.iat[i, j])))
 
-class NewWindw(QtWidgets.QWidget):
-    command = QtCore.pyqtSignal(str)
-
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Start")
-        self.inputbox = QtWidgets.QLineEdit(self)
-        self.inputbox.resize(500, 100)
-        self.inputbox.returnPressed.connect(self.sendCommand)
-        self.show()
-
-    @QtCore.pyqtSlot()
-    def sendCommand(self):
-        msg = self.inputbox.text()
-        self.command.emit(msg)
-        self.inputbox.setText("")
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
 
 
-app = QtWidgets.QApplication(sys.argv)
-window = Window()
-sys.exit(app.exec())
+app = QApplication(sys.argv)
+sheet = MainWindow()
+sheet.show()
+sys.exit(app.exec_())

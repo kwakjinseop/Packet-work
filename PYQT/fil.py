@@ -4,6 +4,7 @@ import os
 import serial.tools.list_ports
 import xlwt as xlwt
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 import serial, random, string, sys, secrets
 from PyQt5 import QtWidgets, QtGui, QtCore
 import qdarkstyle
@@ -102,6 +103,8 @@ class Ui_FilterView(object):
 
         self.tableWidget.setItem(0, 5, QTableWidgetItem(
             "Payload\n=======================\n" + str.join("", ("0x%02X " % i for i in packet[14:]))))  # Payload
+        self.model = QtGui.QStandardItemModel(FilterView)
+
 
         #############왼쪽 테이블########################
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
@@ -166,7 +169,24 @@ class Ui_FilterView(object):
         self.pushButton_4.setText("Import")
         self.pushButton_4.clicked.connect(self.loadCsv)
         FilterView.setCentralWidget(self.centralwidget)
+        #####################CSV 버튼#################################
+        # self.animation = QVariantAnimation(self)
+        # self.animation.valueChanged.connect(self.moveToLine)
+        # self.btn = QtWidgets.QPushButton(self.centralwidget)
+        # self.btn.setGeometry(QtCore.QRect(890, 580, 91, 51))
+        # self.btn.setText("Move")
+        # self.btn.clicked.connect(self.tableWidget.startAnimation)
 
+
+    def startAnimation(self):
+        self.animation.stop()
+        self.animation.setStartValue(0)
+        self.animation.setEndValue(self.verticalScrollBar().maximum())
+        self.animation.setDuration(self.animation.endValue()*4)
+        self.animation.start()
+
+    def moveToLine(self, i):
+        self.verticalScrollBar().setValue(i)
 
     def combosubject2(self):
         global combomsg
@@ -384,16 +404,19 @@ class Ui_FilterView(object):
 
                 writer.writerow(rowdata)
 
-    def loadCsv(self, fileName):
-        with open(fileName, 'monschedule.csv') as fileInput:
-            for row in csv.reader(fileInput):
-                items = [
-                    QtGui.QStandardItem(field)
-                    for field in row
-                ]
-                self.tableWidget.appendRow(items)
-
-
+    def loadCsv(self):
+        try:
+            path = QFileDialog.getOpenFileName(self, 'Open CSV', os.getenv('HOME'), 'CSV(*.csv)')[0]
+            self.all_data = pd.read_csv(path)
+        except:
+            print(path)
+        # with open("monschedule.csv", "r") as fileInput:
+        #     for row in csv.reader(fileInput):
+        #         items = [
+        #             QtGui.QStandardItem(field)
+        #             for field in row
+        #         ]
+        #         self.model.appendRow(items)
 
 
 class AlignDelegate(QtWidgets.QStyledItemDelegate):
@@ -401,8 +424,7 @@ class AlignDelegate(QtWidgets.QStyledItemDelegate):
         super(AlignDelegate, self).initStyleOption(option, index)
         option.displayAlignment = QtCore.Qt.AlignCenter
 
-        # layout = QVBoxLayout
-        # layout.addWidget(self.table)
+
 
 
 
