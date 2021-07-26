@@ -42,15 +42,15 @@ class MyApp(QWidget):
                 tableItem = QTableWidgetItem(str(value))
                 self.table.setItem(row[0], col_index, tableItem)
 
-        self.table.setColumnWidth(2, 300)
+        self.table.setColumnWidth(8, 300)
 
 
 if __name__ == '__main__':
     # don't auto scale when drag app to a different monitor.
     # QGuiApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
-    excel_file_path = 'qwer.xls'
-    worksheet_name = 'Sales'
+    excel_file_path = 'test.xls'
+    worksheet_name = 'sheet'
 
     app = QApplication(sys.argv)
     app.setStyleSheet('''

@@ -1,62 +1,49 @@
-import csv
-from PyQt5 import QtCore, QtGui, QtWidgets
+import os
+import sys
+from os.path import dirname, realpath, join
+from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QTableWidget, QTableWidgetItem
+from PyQt5.uic import loadUiType
+import pandas as pd
 
 
-class MyWindow(QtWidgets.QWidget):
-    def __init__(self, fileName, parent=None):
-        super(MyWindow, self).__init__(parent)
-        self.fileName = fileName
-        self.model = QtGui.QStandardItemModel(self)
-        self.tableView = QtWidgets.QTableView(self)
-        self.tableView.setModel(self.model)
-        self.tableView.horizontalHeader().setStretchLastSection(True)
-        self.pushButtonLoad = QtWidgets.QPushButton(self)
-        self.pushButtonLoad.setText("Load Csv File!")
-        self.pushButtonLoad.clicked.connect(self.on_pushButtonLoad_clicked)
-        self.pushButtonWrite = QtWidgets.QPushButton(self)
-        self.pushButtonWrite.setText("Write Csv File!")
-        self.pushButtonWrite.clicked.connect(self.on_pushButtonWrite_clicked)
-        self.layoutVertical = QtWidgets.QVBoxLayout(self)
-        self.layoutVertical.addWidget(self.tableView)
-        self.layoutVertical.addWidget(self.pushButtonLoad)
-        self.layoutVertical.addWidget(self.pushButtonWrite)
+scriptDir = dirname(realpath(__file__))
+From_Main, _ = loadUiType(join(dirname(__file__), "untitled.ui"))
 
-    def loadCsv(self, fileName):
-        with open(fileName, "r") as fileInput:
-            for row in csv.reader(fileInput):
-                items = [
-                    QtGui.QStandardItem(field)
-                    for field in row
-                ]
-                self.model.appendRow(items)
+class MainWindow(QWidget, From_Main):
+    def __init__(self):
+        super(MainWindow, self).__init__()
+        QWidget.__init__(self)
+        self.setupUi(self)
 
+        self.ButtonOpen.clicked.connect(self.OpenFile)
+        self.BtnDescribe.clicked.connect(self.dataHead)
 
-    def writeCsv(self, fileName):
-        with open(fileName, "w") as fileOutput:
-            writer = csv.writer(fileOutput)
-            for rowNumber in range(self.model.rowCount()):
-                fields = [
-                    self.model.data(
-                        self.model.index(rowNumber, columnNumber),
-                        QtCore.Qt.DisplayRole
-                    )
-                    for columnNumber in range(self.model.columnCount())
-                ]
-                writer.writerow(fields)
+    def OpenFile(self):
+        try:
+            path = QFileDialog.getOpenFileName(self, 'Open CSV', os.getenv('HOME'), 'CSV(*.csv)')[0]
+            self.all_data = pd.read_csv(path)
+        except:
+            print(path)
 
-    @QtCore.pyqtSlot()
-    def on_pushButtonWrite_clicked(self):
-        self.writeCsv(self.fileName)
+    def dataHead(self):
+        numColomn = self.spinBox.value()
+        if numColomn == 0:
+            NumRows = len(self.all_data.index)
+        else:
+            NumRows = numColomn
+        self.tableWidget.setColumnCount(len(self.all_data.columns))
+        self.tableWidget.setRowCount(NumRows)
+        self.tableWidget.setHorizontalHeaderLabels(self.all_data.columns)
 
-    @QtCore.pyqtSlot()
-    def on_pushButtonLoad_clicked(self):
-        self.loadCsv(self.fileName)
+        for i in range(NumRows):
+            for j in range(len(self.all_data.columns)):
+                self.tableWidget.setItem(i, j, QTableWidgetItem(str(self.all_data.iat[i, j])))
+
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
 
 
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    app.setApplicationName('MyWindow')
-    main = MyWindow("monschedule.csv")
-    main.show()
-    sys.exit(app.exec_())
+app = QApplication(sys.argv)
+sheet = MainWindow()
+sheet.show()
+sys.exit(app.exec_())
