@@ -12,6 +12,8 @@ import collections
 import pandas as pd
 from PyQt5.uic import loadUiType
 import pandas as pd
+import serial.tools.list_ports
+
 
 
 
@@ -57,6 +59,7 @@ textReserved = []
 textLength = []
 msg = -1
 combomsg = ""
+NumRows=0
 
 
 result=""
@@ -69,7 +72,8 @@ From_Main, _ = loadUiType(join(dirname(__file__), "untitled.ui"))
 
 class Ui_FilterView(QWidget, From_Main):
     def setupUi(self, FilterView):
-        global Length_1, STX_O, CheckSum_O, Payload_O
+        global Length_1, STX_O, CheckSum_O, Payload_O, combomsg
+
         FilterView.setWindowTitle("FilterView")
         FilterView.resize(1912, 951)
         FilterView.setStyleSheet("Grid layout")
@@ -89,27 +93,23 @@ class Ui_FilterView(QWidget, From_Main):
         column_headers = ['Number', 'STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload']
         self.tableWidget.setHorizontalHeaderLabels(column_headers)
 
-        self.tableWidget.setItem(0, 1, QTableWidgetItem("STX\n=======================\n" + (hex(packet[0]))))  # STX
+        self.tableWidget.setItem(0, 1, QTableWidgetItem((hex(packet[0]))))  # STX
         STX_O = str(hex(packet[0]))
-        self.tableWidget.setItem(0, 2, QTableWidgetItem(
-            "Time\n=======================\n" + str.join("", ("0x%02X " % i for i in packet[1:5]))))  # Time
-        self.tableWidget.setItem(0, 3, QTableWidgetItem(
-            "Checksum\n=======================\n" + str.join("", ("0x%02X " % i for i in packet[5:9]))))  # Checksum
+        self.tableWidget.setItem(0, 2, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[1:5]))))  # Time
+        self.tableWidget.setItem(0, 3, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[5:9]))))  # Checksum
         CheckSum_O = str.join("", ("0x%02X " % i for i in packet[5:9]))
-        self.tableWidget.setItem(0, 4, QTableWidgetItem(
-            "Reserved\n=======================\n" + str.join("", ("0x%02X " % i for i in packet[9:13]))))  # Reserved
+        self.tableWidget.setItem(0, 4, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[9:13]))))  # Reserved
         i = 14
         while (i < len(packet)):
             Length_1 += 1
             i += 1
-        self.tableWidget.setItem(0, 5, QTableWidgetItem("Length\n=======================\n" + str(Length_0)))  # Reserved
+        self.tableWidget.setItem(0, 5, QTableWidgetItem(str(Length_0)))  # Reserved
         self.tableWidget.setItem(0, 6, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[15:]))))  # Payload
         Payload_O = sum(packet[15:])
 
         Length_1 = str.join("", ("0x%02X " % i for i in packet[15:]))
 
-        self.tableWidget.setItem(0, 5, QTableWidgetItem(
-            "Payload\n=======================\n" + str.join("", ("0x%02X " % i for i in packet[14:]))))  # Payload
+        self.tableWidget.setItem(0, 5, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[14:]))))  # Payload
         self.model = QtGui.QStandardItemModel(FilterView)
 
 
@@ -151,15 +151,15 @@ class Ui_FilterView(QWidget, From_Main):
         self.textEdit_2.setGeometry(QtCore.QRect(10, 770, 321, 51))
         self.textEdit_2.setObjectName("textEdit_2")
         ###############COM 선택 콤보박스##########################
+        ports = serial.tools.list_ports.comports()
+        a = [port.name for port in ports]
         self.comboBox2 = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox2.setGeometry(QtCore.QRect(460, 770, 111, 51))
         self.comboBox2.setObjectName("textEdit_2")
-        self.comboBox2.addItem("COM1")
-        self.comboBox2.addItem("COM2")
-        self.comboBox2.addItem("COM3")
-        self.comboBox2.addItem("COM4")
-        self.comboBox2.addItem("COM5")
-        self.comboBox2.currentTextChanged.connect(self.combosubject2)
+        for i in range(len(a)):
+            self.comboBox2.addItem(a[i])
+            combomsg=self.comboBox2.currentText()
+        # self.comboBox2.currentTextChanged.connect(self.combosubject2)
         #############텍스트 입력상자#########################
         self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_2.setGeometry(QtCore.QRect(340, 770, 111, 51))
@@ -170,7 +170,7 @@ class Ui_FilterView(QWidget, From_Main):
         self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_3.setGeometry(QtCore.QRect(890, 460, 91, 51))
         self.pushButton_3.setText("Export")
-        self.pushButton.clicked.connect(self.handleSavemon)
+        self.pushButton_3.clicked.connect(self.handleSavemon)
         self.pushButton_4 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_4.setGeometry(QtCore.QRect(890, 520, 91, 51))
         self.pushButton_4.setText("Import")
@@ -187,52 +187,19 @@ class Ui_FilterView(QWidget, From_Main):
         self.btn_pause.clicked.connect(self.pause)
         self.btn_keep = QtWidgets.QPushButton(self.centralwidget)
         self.btn_keep.setGeometry(QtCore.QRect(700, 770, 111, 51))
-        self.btn_keep.setText("Keep")
-        self.btn_keep.clicked.connect(self.pause)
+        self.btn_keep.setText("Stop")
+        self.btn_keep.clicked.connect(self.stop)
+        #############################################################
 
-    def loadCsv(self):
-        try:
-            path = QFileDialog.getOpenFileName(self, 'Open CSV', os.getenv('HOME'), 'CSV(*.csv)')[0]
-            self.all_data = pd.read_csv(path)
-        except:
-            print(path)
-
-
-    def dataHead(self):
-        NumRows = len(self.all_data.index)
-        self.tableWidget.setRowCount(NumRows)
-
-
-        for i in range(NumRows):
-            for j in range(7):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(self.all_data.iat[i, j])))
-
-        self.tableWidget.resizeColumnsToContents()
-        self.tableWidget.resizeRowsToContents()
-
-    def keep(self):
+    def stop(self):
         global signal
-        signal = "Keep"
+        signal = "Stop"
+
 
     def pause(self):
         global signal
         # print("Paused")
         signal="Pause"
-
-    def combosubject2(self):
-        global combomsg
-        if (self.comboBox2.currentText() == "COM1"):
-            combomsg = "COM1"
-            print(combomsg)
-        elif (self.comboBox2.currentText() == "COM2"):
-            combomsg = "COM2"
-            print(combomsg)
-        elif (self.comboBox2.currentText() == "COM3"):
-            combomsg = "COM3"
-            print(combomsg)
-        elif (self.comboBox2.currentText() == "COM4"):
-            combomsg = "COM4"
-            print(combomsg)
 
     def sleep(self,n):
         QtTest.QTest.qWait(n*1000)
@@ -240,15 +207,16 @@ class Ui_FilterView(QWidget, From_Main):
 
     def uart(self):  # 20개의 패킷이 들어옴 //15부터 payload
         global value1
-        global packet, combomsg, signal
+        global packet, combomsg, signal, NumRows
         global STX, CheckSum, Length, Time, checksum, Payload_O, leng, n_rows, start, Number, textPayload, textSTX, textTime, textCheckSum, textReserved, textLength, msg
         ser = serial.Serial(combomsg, 115200, timeout=1)
         ############ 랜덤 16진수 문자열 생성 부분##################
-        for j in range(20000):
-            print(signal)
+        for NumRows in range(20000):
             if signal == "Pause":
                 self.sleep(10)
-                signal = "keep"
+                signal="normal"
+            elif signal == "Stop":
+                break
             else:
                 self.sleep(1)
 
@@ -322,62 +290,69 @@ class Ui_FilterView(QWidget, From_Main):
             n_rows += 1
             Number += 1
             self.sleep(0.1)
-            print(signal)
-
-
-            # self.tableWidget.rowsInserted.connect(self.autoScroll)
-            # assert sys.getsizeof(self.tableWidget)
 
 
 
+    def loadCsv(self):
+        try:
+            path = QFileDialog.getOpenFileName(self, 'Open CSV', os.getenv('HOME'), 'CSV(*.csv)')[0]
+            self.all_data = pd.read_csv(path)
+        except:
+            print(path)
+
+    def dataHead(self):
+        global NumRows, Number, value1
+        NumRows = len(self.all_data.index)
+        self.tableWidget.setRowCount(NumRows+value1+2)
+        for i in range(NumRows):
+            for j in range(7):
+                self.tableWidget.setItem(value1, j, QTableWidgetItem(str(self.all_data.iat[i, j])))
+            value1 = value1 + 1
 
     def combosubject(self):
         global msg
         if (self.comboBox.currentText() == "Number"):
-            print(self.comboBox.currentText())
             msg = 0
         elif (self.comboBox.currentText() == "STX"):
-            print(self.comboBox.currentText())
             msg = 1
         elif (self.comboBox.currentText() == "Time"):
-            print(self.comboBox.currentText())
             msg = 2
         elif (self.comboBox.currentText() == "CheckSum"):
-            print(self.comboBox.currentText())
             msg = 3
         elif (self.comboBox.currentText() == "Reserved"):
-            print(self.comboBox.currentText())
             msg = 4
         elif (self.comboBox.currentText() == "Length"):
-            print(self.comboBox.currentText())
             msg = 5
         elif (self.comboBox.currentText() == "Payload"):
-            print(self.comboBox.currentText())
             msg = 6
 
     def filtering(self, fileName): #필터 버튼을 눌렀을 경우
-        global result, msg, value2, txt
+        global result, msg, value2, txt, NumRows
         global STX, CheckSum, Length, Time, checksum, Payload_O, leng, n_rows, start, Number, textPayload, textSTX, textTime, textCheckSum, textReserved, textLength, msg, TS, TR, TP, Reserved, Payload
         query = self.textEdit.toPlainText()
         self.filename = fileName
+
         if msg==0: #Number로 콤보박스를 체크했을 경우
-            for i in range(0,n_rows-1):
-                data = self.tableWidget.item(i,0)
-                txt=data.text()
-                if txt == query: #만약에 일치하는 경우
-                    self.tableWidget_2.setItem(value2, 0, QTableWidgetItem(self.tableWidget.item(i, 0)))
-                    self.tableWidget_2.setItem(value2, 1, QTableWidgetItem(self.tableWidget.item(i, 1)))
-                    self.tableWidget_2.setItem(value2, 2, QTableWidgetItem(self.tableWidget.item(i, 2)))
-                    self.tableWidget_2.setItem(value2, 3, QTableWidgetItem(self.tableWidget.item(i, 3)))
-                    self.tableWidget_2.setItem(value2, 4, QTableWidgetItem(self.tableWidget.item(i, 4)))
-                    self.tableWidget_2.setItem(value2, 5, QTableWidgetItem(self.tableWidget.item(i, 5)))
-                    self.tableWidget_2.setItem(value2, 6, QTableWidgetItem(self.tableWidget.item(i, 6)))
-                    value2 = value2 +1
+                for i in range(0,self.tableWidget.rowCount()):
+                    data = self.tableWidget.item(i,0)
+                    txt=data.text()
+                    print(type(txt))
+                    print(type("+++"+query))
+                    # if txt == query: #만약에 일치하는 경우
+                    #     self.tableWidget_2.setItem(value2, 0, QTableWidgetItem(self.tableWidget.item(i, 0)))
+                    #     self.tableWidget_2.setItem(value2, 1, QTableWidgetItem(self.tableWidget.item(i, 1)))
+                    #     self.tableWidget_2.setItem(value2, 2, QTableWidgetItem(self.tableWidget.item(i, 2)))
+                    #     self.tableWidget_2.setItem(value2, 3, QTableWidgetItem(self.tableWidget.item(i, 3)))
+                    #     self.tableWidget_2.setItem(value2, 4, QTableWidgetItem(self.tableWidget.item(i, 4)))
+                    #     self.tableWidget_2.setItem(value2, 5, QTableWidgetItem(self.tableWidget.item(i, 5)))
+                    #     self.tableWidget_2.setItem(value2, 6, QTableWidgetItem(self.tableWidget.item(i, 6)))
+                    #     value2 = value2 +1
+
+
         if msg==2: #Time로 콤보박스를 체크했을 경우
             for i in range(0,n_rows-1):
                 data = self.tableWidget.item(i,2)
                 txt=data.text()
-
                 if txt == query: #만약에 일치하는 경우
 
                     self.tableWidget_2.setItem(value2, 0, QTableWidgetItem(self.tableWidget.item(i, 0)))
@@ -390,7 +365,7 @@ class Ui_FilterView(QWidget, From_Main):
                     value2 = value2 + 1
 
         if msg == 4:  # Reserved로 콤보박스를 체크했을 경우
-            for i in range(0, n_rows -1):
+            for i in range(0, n_rows-1):
                 data = self.tableWidget.item(i, 4)
                 txt = data.text()
 
@@ -406,7 +381,7 @@ class Ui_FilterView(QWidget, From_Main):
                     value2 = value2 + 1
 
         if msg == 5:  # Reserved로 콤보박스를 체크했을 경우
-            for i in range(0, n_rows -1):
+            for i in range(0,n_rows-1):
                 data = self.tableWidget.item(i, 5)
                 txt = data.text()
 
@@ -422,7 +397,7 @@ class Ui_FilterView(QWidget, From_Main):
                     value2 = value2 + 1
 
         if msg == 6:  # Payload로 콤보박스를 체크했을 경우
-            for i in range(0, n_rows - 1):
+            for i in range(0, n_rows-1):
                 data = self.tableWidget.item(i, 6)
                 txt = data.text()
 
@@ -437,17 +412,16 @@ class Ui_FilterView(QWidget, From_Main):
                     self.tableWidget_2.setItem(value2, 6, QTableWidgetItem(self.tableWidget.item(i, 6)))
                     value2 = value2 + 1
 
-
     def handleSavemon(self):
         #        with open('monschedule.csv', 'wb') as stream:
-        with open('monschedule.csv', 'w') as stream:  # 'w'
+        with open('sampledata.csv', 'w') as stream:  # 'w'
             writer = csv.writer(stream, lineterminator='\n')  # + , lineterminator='\n'
             for row in range(self.tableWidget_2.rowCount()):
-                rowdata = []
+                rowdata=[]
                 for column in range(self.tableWidget_2.columnCount()):
                     item = self.tableWidget_2.item(row, column)
                     if item is not None:
-                        #                        rowdata.append(unicode(item.text()).encode('utf8'))
+                        # rowdata.append(unicode(item.text()).encode('utf8'))
                         rowdata.append(item.text())  # +
                 writer.writerow(rowdata)
 
