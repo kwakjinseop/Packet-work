@@ -8,14 +8,14 @@ from PyQt5.QtCore import *
 import serial, random, string, sys, secrets
 from PyQt5 import QtWidgets, QtGui, QtCore, QtTest
 import qdarkstyle
-import collections
+import collections, threading
 import pandas as pd
 from PyQt5.uic import loadUiType
 import pandas as pd
 import serial.tools.list_ports
 
 
-
+answer = ""
 value1 = 0
 value2 = 0
 packet = [0xAB, 0x00, 0x00, 0x3C, 0x8C,  # STX, #Time
@@ -45,15 +45,15 @@ n_rows = 1
 start = 1
 Number = 1
 
-textPayload = []
-textSTX = " "
-textTime = []
-textCheckSum = []
-textReserved = []
-textLength = []
+entire=[]
+line_two=""
+
 msg = -1
 combomsg = ""
 NumRows=0
+
+table1status = 0
+table2status = 0
 
 
 linked_list = collections.deque()
@@ -62,59 +62,19 @@ txt = ""
 From_Main, _ = loadUiType(join(dirname(__file__), "untitled.ui"))
 
 
-class Ui_FilterView(QWidget, From_Main):
-    def setupUi(self, FilterView):
-        global Length_1, STX_O, CheckSum_O, Payload_O, combomsg
 
+class Ui_FilterView(QWidget, From_Main):
+    command = QtCore.pyqtSignal(str)
+
+    def setupUi(self, FilterView):
+        self.lock = threading.Lock()
+        global Length_1, STX_O, CheckSum_O, Payload_O, combomsg
         FilterView.setWindowTitle("FilterView")
-        FilterView.resize(1912, 951)
+        FilterView.resize(1950, 980)
         FilterView.setStyleSheet("Grid layout")
         self.centralwidget = QtWidgets.QWidget(FilterView)
         self.centralwidget.setObjectName("centralwidget")
-        self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidget.setGeometry(QtCore.QRect(0, 10, 881, 751))
-        self.tableWidget.setRowCount(20000)
-        self.tableWidget.setColumnCount(7)
-        column_headers = ['Number', 'STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload']
-        self.tableWidget.setHorizontalHeaderLabels(column_headers)
-        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tableWidget.setObjectName("tableWidget")
-        self.tableWidget.setSortingEnabled(True)
-
-        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        column_headers = ['Number', 'STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload']
-        self.tableWidget.setHorizontalHeaderLabels(column_headers)
-
-        self.tableWidget.setItem(0, 1, QTableWidgetItem((hex(packet[0]))))  # STX
-        STX_O = str(hex(packet[0]))
-        self.tableWidget.setItem(0, 2, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[1:5]))))  # Time
-        self.tableWidget.setItem(0, 3, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[5:9]))))  # Checksum
-        CheckSum_O = str.join("", ("0x%02X " % i for i in packet[5:9]))
-        self.tableWidget.setItem(0, 4, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[9:13]))))  # Reserved
-        i = 14
-        while (i < len(packet)):
-            Length_1 += 1
-            i += 1
-        self.tableWidget.setItem(0, 5, QTableWidgetItem(str(Length_0)))  # Reserved
-        self.tableWidget.setItem(0, 6, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[15:]))))  # Payload
-        Payload_O = sum(packet[15:])
-
-        Length_1 = str.join("", ("0x%02X " % i for i in packet[15:]))
-
-        self.tableWidget.setItem(0, 5, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[14:]))))  # Payload
         self.model = QtGui.QStandardItemModel(FilterView)
-
-        self.tableWidget_2 = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidget_2.setGeometry(QtCore.QRect(990, 10, 891, 751))
-        self.tableWidget_2.setRowCount(20000)
-        self.tableWidget_2.setColumnCount(7)
-        self.tableWidget_2.setObjectName("tableWidget_2")
-        column_headers = ['Number', 'STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload']
-        self.tableWidget_2.setHorizontalHeaderLabels(column_headers)
-        self.tableWidget_2.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tableWidget.setSortingEnabled(True)
-        #############오른쪽 테이블##########################
-
 
         # 1번 그룹박스 생성
         self.groupbox1 = QtWidgets.QGroupBox(FilterView)
@@ -197,6 +157,7 @@ class Ui_FilterView(QWidget, From_Main):
         self.radioButton_2.setText("Filtered Data")
         self.radioButton_2.setGeometry(QtCore.QRect(30, 130, 121, 51))
         self.radioButton_2.setObjectName("radioButton_2")
+        self.radioButton_2.clicked.connect(self.FilteredData)
 
         # 4번 그룹박스 생성
         self.groupbox4 = QtWidgets.QGroupBox(self.groupbox3)
@@ -216,13 +177,33 @@ class Ui_FilterView(QWidget, From_Main):
         self.pushButton_5.setGeometry(QtCore.QRect(90, 90, 91, 51))
         self.pushButton_5.setText("Describe")
         self.pushButton_5.clicked.connect(self.dataHead)
-
         FilterView.setCentralWidget(self.centralwidget)
 
 
-    # def RawData(self):
-    #     
-    #
+
+
+    def FilteredData(self, str):
+        print(str)
+        global Length_1, STX_O, CheckSum_O, Payload_O, combomsg, table1status, table2status
+        self.tableWidget_2 = QtWidgets.QTableWidget(self.centralwidget)
+        self.tableWidget_2.setGeometry(QtCore.QRect(0, 20, 2000, 741))
+        self.tableWidget_2.setRowCount(20000)
+        self.tableWidget_2.setColumnCount(7)
+        self.tableWidget_2.setObjectName("tableWidget_2")
+        column_headers = ['Number', 'STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload']
+        self.tableWidget_2.setHorizontalHeaderLabels(column_headers)
+        self.tableWidget_2.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        self.tableWidget_2.setSortingEnabled(True)
+        if (table1status == 1):
+            self.tableWidget.close()
+            table1status = table1status - 1
+            self.tableWidget_2.show()
+        else:
+            self.tableWidget_2.show()
+        table2status+=1
+
+
 
     def stop(self):
         global signal
@@ -239,12 +220,12 @@ class Ui_FilterView(QWidget, From_Main):
 
 
     def uart(self):  # 20개의 패킷이 들어옴 //15부터 payload
-        global value1
+
+        global value1, entire,line_two
         global packet, combomsg, signal, NumRows
-        global STX, CheckSum, Length, Time, checksum, Payload_O, leng, n_rows, start, Number, textPayload, textSTX, textTime, textCheckSum, textReserved, textLength, msg
+        global STX, CheckSum, Length, Time, checksum, Payload_O, leng, n_rows, start, Number, msg
         ser = serial.Serial(combomsg, 115200, timeout=1)
         ############랜덤 16진수 문자열 생성 부분##################
-        print(NumRows)
         for NumRows in range(20000):
             if signal == "Pause":
                 self.sleep(10)
@@ -261,15 +242,62 @@ class Ui_FilterView(QWidget, From_Main):
                 sentences = line_two[i]
                 sentences = ''.join(sentences.split())
                 answer += " "+sentences  #answer가 완성된 랜덤 문장임.
+            self.lock.acquire()
+            try:
+                entire.append(answer)
+            finally:
+                self.lock.release()
+            print("--"+answer)
+
+
+
+    def RawData(self): ####여기 부분부터 작업 하면 됨!!####
+        global Length_1, STX_O, CheckSum_O, Payload_O, combomsg, table1status, table2status
+        global value1, entire, line_two
+        global packet, combomsg, signal, NumRows
+        global STX, CheckSum, Length, Time, checksum, Payload_O, leng, n_rows, start, Number, msg
+
+
+        self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
+        self.tableWidget.setGeometry(QtCore.QRect(0, 20, 2000, 741))
+        self.tableWidget.setRowCount(20000)
+        self.tableWidget.setColumnCount(7)
+        column_headers = ['Number', 'STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload']
+        self.tableWidget.setHorizontalHeaderLabels(column_headers)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tableWidget.setObjectName("tableWidget")
+        self.tableWidget.setSortingEnabled(True)
+
+
+        self.tableWidget.setItem(0, 1, QTableWidgetItem((hex(packet[0]))))  # STX
+        STX_O = str(hex(packet[0]))
+        self.tableWidget.setItem(0, 2, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[1:5]))))  # Time
+        self.tableWidget.setItem(0, 3, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[5:9]))))  # Checksum
+        CheckSum_O = str.join("", ("0x%02X " % i for i in packet[5:9]))
+        self.tableWidget.setItem(0, 4,
+                                 QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[9:13]))))  # Reserved
+        i = 14
+        while (i < len(packet)):
+            Length_1 += 1
+            i += 1
+        self.tableWidget.setItem(0, 5, QTableWidgetItem(str(Length_0)))  # Reserved
+        self.tableWidget.setItem(0, 6, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[15:]))))  # Payload
+        Payload_O = sum(packet[15:])
+
+        Length_1 = str.join("", ("0x%02X " % i for i in packet[15:]))
+
+        self.tableWidget.setItem(0, 5, QTableWidgetItem(str.join("", ("0x%02X " % i for i in packet[14:]))))  # Payload
+        #####################수정된 부분###########################################
+        for i in range(0,len(line_two)):
+
+            self.sleep(1)
+            # print(entire[i])
 
             self.tableWidget.setRowCount(n_rows)
             self.tableWidget.scrollToBottom()
 
-            op = answer
+            op = entire[i]
             a = op.split(" ")
-
-            if (a == "q"):
-                ser.close()
 
             # print(type(a[15]))
             i = 15
@@ -323,7 +351,17 @@ class Ui_FilterView(QWidget, From_Main):
             CheckSum = 0
             n_rows += 1
             Number += 1
-            self.sleep(0.1)
+
+
+
+            if(table2status==1):
+                self.tableWidget_2.close()
+                table2status=table2status-1
+                self.tableWidget.show()
+            else:
+                self.tableWidget.show()
+            table1status+=1
+
 
 
 
@@ -363,7 +401,7 @@ class Ui_FilterView(QWidget, From_Main):
 
     def filtering(self, fileName): #필터 버튼을 눌렀을 경우
         global msg, value2, txt, NumRows, value1
-        global STX, CheckSum, Length, Time, checksum, Payload_O, leng, n_rows, start, Number, textPayload, textSTX, textTime, textCheckSum, textReserved, textLength, msg, TS, TR, TP, Reserved, Payload
+        global STX, CheckSum, Length, Time, checksum, Payload_O, leng, n_rows, start, Number, msg, TS, TR, TP, Reserved, Payload
         query = self.textEdit.toPlainText()
         self.filename = fileName
 
@@ -460,6 +498,13 @@ class Ui_FilterView(QWidget, From_Main):
                         rowdata.append(item.text())  # +
                 writer.writerow(rowdata)
 
+    rawthread = threading.Thread(target=RawData, args=())
+    filterthread = threading.Thread(target=FilteredData, args=("Success",))
+    uartcom = threading.Thread(target=uart, args=())
+    uartcom.start()
+    threading.Timer(2.5, rawthread).start()
+    filterthread.start()
+
 
 
 
@@ -468,6 +513,8 @@ class AlignDelegate(QtWidgets.QStyledItemDelegate):
     def initStyleOption(self, option, index):
         super(AlignDelegate, self).initStyleOption(option, index)
         option.displayAlignment = QtCore.Qt.AlignCenter
+
+
 
 
 
