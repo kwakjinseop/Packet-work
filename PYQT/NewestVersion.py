@@ -1,15 +1,11 @@
 import csv
 import os
-from os.path import dirname, realpath, join
-import serial.tools.list_ports
-import xlwt as xlwt
+from os.path import dirname, join
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-import serial, random, string, sys, secrets
+import serial, secrets
 from PyQt5 import QtWidgets, QtGui, QtCore, QtTest
-import qdarkstyle
 import collections, threading
-import pandas as pd
 from PyQt5.uic import loadUiType
 import pandas as pd
 import serial.tools.list_ports
@@ -68,7 +64,7 @@ class Ui_FilterView(QWidget, From_Main):
     command = QtCore.pyqtSignal(str)
 
     def setupUi(self, FilterView):
-        global Length_1, STX_O, CheckSum_O, Payload_O, somethingvalue
+        global Length_1, STX_O, CheckSum_O, Payload_O, somethingvalue, answer
         FilterView.setWindowTitle("FilterView")
         FilterView.resize(1950, 980)
         FilterView.setStyleSheet("Grid layout")
@@ -94,34 +90,32 @@ class Ui_FilterView(QWidget, From_Main):
         self.statuslabel.setIndent(5)
         self.conditionlabel = QtWidgets.QLabel(self.groupbox1)
         self.conditionlabel.setGeometry(QtCore.QRect(130, 120, 161, 51))
-        self.conditionlabel.setText(somethingvalue) # 여기서 이제 값이 connected/unconnected로 나뉠것임.
         self.conditionlabel.setScaledContents(False)
         self.conditionlabel.setAlignment(QtCore.Qt.AlignJustify | QtCore.Qt.AlignVCenter)
         self.conditionlabel.setIndent(5)
         self.conditionlabel.setObjectName("label_3")
-        self.pushButton = QtWidgets.QPushButton(self.groupbox1)
-        self.pushButton.setGeometry(QtCore.QRect(10, 160, 93, 51))
-        self.pushButton.setText("Connect")
-        self.pushButton.clicked.connect(self.tryConnecting)
+
+
+
+        self.connectpushButton = QtWidgets.QPushButton(self.groupbox1)
+        self.connectpushButton.setGeometry(QtCore.QRect(10, 160, 93, 51))
+        self.connectpushButton.setText("Connect")
+        self.connectpushButton.setCheckable(True)
+        self.connectpushButton.toggled.connect(self.tryConnecting)
+
         self.pushButton_2 = QtWidgets.QPushButton(self.groupbox1)
         self.pushButton_2.setGeometry(QtCore.QRect(130, 160, 93, 51))
-        self.pushButton_2.setText("Unconnect")
+        self.pushButton_2.setText("Exit")
         self.pushButton_2.clicked.connect(QCoreApplication.instance().quit)
 
 
-        # ports = serial.tools.list_ports.comports()
-        # a = [port.name for port in ports]
+        ports = serial.tools.list_ports.comports()
+        a = [port.name for port in ports]
         self.comboBox2 = QtWidgets.QComboBox(self.groupbox1)
         self.comboBox2.setGeometry(QtCore.QRect(130, 50, 111, 51))
-        self.comboBox2.addItem("COM1")
-        self.comboBox2.addItem("COM2")
-        self.comboBox2.addItem("COM3")
-        self.comboBox2.addItem("COM4")
-        self.comboBox2.addItem("COM5")
-        self.comboBox2.addItem("COM6")
-        self.comboBox2.addItem("COM7")
-
-        self.comboBox2.currentTextChanged.connect(self.comboBoxFunction)
+        self.comboBox2.addItem(a[0])
+        answer = a[0]
+        # self.comboBox2.currentTextChanged.connect(self.comboBoxFunction)
         # for i in range(len(a)):
         #     self.comboBox2.addItem(a[i])
         #     combomsg=self.comboBox2.currentText()
@@ -197,38 +191,29 @@ class Ui_FilterView(QWidget, From_Main):
         self.pushButton_5.clicked.connect(self.dataHead)
         FilterView.setCentralWidget(self.centralwidget)
 
-    def comboBoxFunction(self):
-        global msg, answer
-        if (self.comboBox2.currentText() == "COM1"):
-            answer = "COM1"
-        elif (self.comboBox2.currentText() == "COM2"):
-            answer = "COM2"
-        elif (self.comboBox2.currentText() == "COM3"):
-            answer = "COM3"
-        elif (self.comboBox2.currentText() == "COM4"):
-            answer = "COM4"
-        elif (self.comboBox2.currentText() == "COM5"):
-            answer = "COM5"
-        elif (self.comboBox2.currentText() == "COM6"):
-            answer = "COM6"
-        elif (self.comboBox2.currentText() == "COM7"):
-            answer = "COM7"
+    def change_toggled(self):
+        if self.pushButton.setCheckable(False):
+            self.pushButton.text("Disconnect")
 
 
-    def tryConnecting(self,event):
+
+    def tryConnecting(self,state):
         global answer, combomsg
         ports = serial.tools.list_ports.comports()
         a = [port.name for port in ports]
         print(a[0])
+        self.connectpushButton.setText({True: "Connect", False: "Disconnect"}[state])
         if answer == a[0]:
             combomsg = answer
             self.setGeometry(300, 300, 300, 200)
             reply = QMessageBox.question(self, 'Message', 'Sucessfully Connected',
                                          QMessageBox.Yes )
+            # self.comboBox2.setEnabled(False)
         else:
             self.setGeometry(300, 300, 300, 200)
             reply = QMessageBox.question(self, 'Message', 'Try another port',
                                          QMessageBox.Yes)
+
 
 
 
@@ -256,6 +241,7 @@ class Ui_FilterView(QWidget, From_Main):
             entire.append(answer)
             # print(str(entire))
 
+
         self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
         self.tableWidget.setGeometry(QtCore.QRect(0, 20, 2000, 741))
         self.tableWidget.setRowCount(20000)
@@ -264,6 +250,7 @@ class Ui_FilterView(QWidget, From_Main):
         column_headers = ['Number', 'STX', 'Time', 'Checksum', 'Reserved', 'Length', 'Payload']
         self.tableWidget.setHorizontalHeaderLabels(column_headers)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tableWidget.verticalHeader().setDefaultSectionSize(self.tableWidget.rowHeight(0))
         self.tableWidget.setSortingEnabled(True)
 
         global Length_1, STX_O, CheckSum_O, Payload_O, table1status, table2status
@@ -337,8 +324,6 @@ class Ui_FilterView(QWidget, From_Main):
             self.tableWidget.setItemDelegateForColumn(3, delegate)
             self.tableWidget.setItemDelegateForColumn(4, delegate)
             self.tableWidget.setItemDelegateForColumn(5, delegate)
-
-            self.tableWidget.verticalHeader().setDefaultSectionSize(120)
 
             value1 = value1 + 1
             CheckSum = 0
