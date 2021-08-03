@@ -6,7 +6,6 @@ from PyQt5.QtCore import *
 import serial, secrets
 from PyQt5 import QtWidgets, QtGui, QtCore, QtTest
 import collections, threading
-from PyQt5.uic import loadUiType
 import pandas as pd
 import serial.tools.list_ports
 
@@ -56,11 +55,10 @@ table2status = 0
 linked_list = collections.deque()
 txt = ""
 
-From_Main, _ = loadUiType(join(dirname(__file__), "untitled.ui"))
 
 
 
-class Ui_FilterView(QWidget, From_Main):
+class Ui_FilterView(QWidget):
     command = QtCore.pyqtSignal(str)
 
     def setupUi(self, FilterView):
