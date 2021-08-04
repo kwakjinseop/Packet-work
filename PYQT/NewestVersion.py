@@ -340,7 +340,7 @@ class Ui_FilterView(QWidget):
             table2status = table2status - 1
             self.tableWidget.show()
         else:
-            self.tableWidget.show()
+            self.tableWidget.show()#latest Version
         table1status += 1
 
     def table2show(self):
